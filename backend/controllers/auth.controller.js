@@ -135,10 +135,12 @@ export async function verifyEmail(req, res) {
     user.verificationToken = null; // Clear the token
     await user.save();
     generateTokenAndSetCookie(user._id, res);
-
+    return res.redirect(
+      "https://upgraded-mern-stack-video-platform.onrender.com/"
+    );
     res.status(200).json({
       success: true,
-      // message: "Email verified successfully! You can now log in.",
+      message: "Email verified successfully! You can now log in.",
     });
   } catch (error) {
     console.log("Error in email verification", error.message);
