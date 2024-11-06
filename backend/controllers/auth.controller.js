@@ -51,16 +51,18 @@ export async function signup(req, res) {
     const salt = await bcryptjs.genSalt(10);
     const hashedPassword = await bcryptjs.hash(password, salt);
     const token = crypto.randomBytes(32).toString("hex"); // Generate a verification token
+    // const expirationTime = Date.now() + 3600000;
+    const expirationTime = Date.now() + 60000;
 
     const PROFILE_PICS = ["/avatar1.png", "/avatar2.png", "/avatar3.png"];
     const image = PROFILE_PICS[Math.floor(Math.random() * PROFILE_PICS.length)];
-
     const newUser = new User({
       email,
       password: hashedPassword,
       username,
       image,
       verificationToken: token, // Add token to user model
+      verificationTokenExpiration: expirationTime,
       isVerified: false, // Add verification status
     });
 
@@ -99,7 +101,11 @@ async function sendVerificationEmail(email, verificationLink) {
         ],
         Subject: "Email Verification",
         TextPart: `Please verify your email by clicking the link: ${verificationLink}`,
-        HTMLPart: `<h3>Email Verification</h3><p>Please verify your email by clicking the link: <a href="${verificationLink}">${verificationLink}</a></p>`,
+        // HTMLPart: `<h3>Email Verification</h3><p>Please verify your email by clicking the link: <a href="${verificationLink}">${verificationLink}</a></p>`,
+        HTMLPart: `<h3>Welcome to Mern Stack Video Platform!</h3>
+<p>We're excited to have you on board. Please click the button below to verify your email and get started.</p>
+<a href="${verificationLink}" style="padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Verify Email</a>
+`,
       },
     ],
   });
@@ -129,10 +135,15 @@ export async function verifyEmail(req, res) {
         .status(400)
         .json({ success: false, message: "Invalid or expired token." });
     }
-
+    if (user.verificationTokenExpiration < Date.now()) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Verification token has expired." });
+    }
     user.isVerified = true; // Set verific
     // Update the user's verification statusation status to true
     user.verificationToken = null; // Clear the token
+    user.verificationTokenExpiration = null;
     await user.save();
     generateTokenAndSetCookie(user._id, res);
     return res.redirect(
