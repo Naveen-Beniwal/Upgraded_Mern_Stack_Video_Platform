@@ -1,16 +1,24 @@
 import { User } from "../models/user.model.js";
 import bcryptjs from "bcryptjs";
 import { generateTokenAndSetCookie } from "../utils/generateToken.js";
-import crypto from "crypto"; // Import crypto for token generation
-import mailjet from "node-mailjet"; // Import Mailjet
+import crypto from "crypto";
+import { sendVerificationEmail } from "../mailjet/emails.js";
 import { ENV_VARS } from "../config/envVars.js";
-// Configure Mailjet
 
-const mailjetClient = mailjet.apiConnect(
-  ENV_VARS.MAILJET_API_KEY,
-  ENV_VARS.MAILJET_API_SECRET
-);
+const HOUR_IN_MS = 3600000; // 1 hour in milliseconds
 
+// Helper function to generate a new verification token
+const generateNewVerificationToken = async (user) => {
+  user.verificationToken = crypto.randomBytes(32).toString("hex");
+  // user.verificationTokenExpires = Date.now() + HOUR_IN_MS;
+  user.verificationTokenExpires = new Date(Date.now() + HOUR_IN_MS);
+
+  await user.save();
+
+  // await user.save();
+};
+
+// Signup function
 export async function signup(req, res) {
   try {
     const { email, password, username } = req.body;
@@ -20,7 +28,6 @@ export async function signup(req, res) {
         .status(400)
         .json({ success: false, message: "All fields are required" });
     }
-
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!emailRegex.test(email)) {
@@ -34,14 +41,44 @@ export async function signup(req, res) {
       });
     }
 
-    const existingUserByEmail = await User.findOne({ email: email });
+    const existingUserByEmail = await User.findOne({ email });
     if (existingUserByEmail) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Email already exists" });
+      if (!existingUserByEmail.isVerified) {
+        if (
+          !existingUserByEmail.verificationTokenExpires ||
+          existingUserByEmail.verificationTokenExpires < Date.now()
+        ) {
+          // Clear expired token data
+          existingUserByEmail.verificationToken = null;
+          existingUserByEmail.verificationTokenExpires = null;
+
+          // Generate a new token
+          await generateNewVerificationToken(existingUserByEmail);
+
+          const verificationLink = `${ENV_VARS.ACTIVE_LINK}/api/v1/auth/verify-email?token=${existingUserByEmail.verificationToken}`;
+          await sendVerificationEmail(
+            existingUserByEmail.email,
+            verificationLink
+          );
+
+          return res.status(200).json({
+            success: true,
+            message: "Verification email sent again. Please check your inbox.",
+          });
+        }
+        return res.status(400).json({
+          success: false,
+          message: "Email already exists. Please verify your email.",
+        });
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: "Email already exists and is verified.",
+        });
+      }
     }
 
-    const existingUserByUsername = await User.findOne({ username: username });
+    const existingUserByUsername = await User.findOne({ username });
     if (existingUserByUsername) {
       return res
         .status(400)
@@ -50,29 +87,25 @@ export async function signup(req, res) {
 
     const salt = await bcryptjs.genSalt(10);
     const hashedPassword = await bcryptjs.hash(password, salt);
-    const token = crypto.randomBytes(32).toString("hex"); // Generate a verification token
-    // const expirationTime = Date.now() + 3600000;
-    const expirationTime = Date.now() + 60000;
+    const token = crypto.randomBytes(32).toString("hex");
+    const expirationTime = new Date(Date.now() + HOUR_IN_MS); // Date.now() + HOUR_IN_MS;
 
     const PROFILE_PICS = ["/avatar1.png", "/avatar2.png", "/avatar3.png"];
     const image = PROFILE_PICS[Math.floor(Math.random() * PROFILE_PICS.length)];
+
     const newUser = new User({
       email,
       password: hashedPassword,
       username,
       image,
-      verificationToken: token, // Add token to user model
-      verificationTokenExpiration: expirationTime,
-      isVerified: false, // Add verification status
+      verificationToken: token,
+      verificationTokenExpires: expirationTime,
+      isVerified: false,
     });
 
     await newUser.save();
 
-    // Send verification email
-    const verificationLink = `https://upgraded-mern-stack-video-platform.onrender.com/api/v1/auth/verify-email?token=${token}`;
-
-    // const verificationLink = `http://localhost:5000/api/v1/auth/verify-email?token=${token}`;
-
+    const verificationLink = `${ENV_VARS.ACTIVE_LINK}/api/v1/auth/verify-email?token=${token}`;
     await sendVerificationEmail(email, verificationLink);
 
     res.status(201).json({
@@ -80,54 +113,15 @@ export async function signup(req, res) {
       message: "Signup successful! Please verify your email.",
     });
   } catch (error) {
-    console.log("Error in signup controller", error.message);
+    console.log("Error in signup controller:", error.message);
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 }
 
-// Function to send verification email
-async function sendVerificationEmail(email, verificationLink) {
-  const request = mailjetClient.post("send", { version: "v3.1" }).request({
-    Messages: [
-      {
-        From: {
-          Email: "naveenbeniwal00001@gmail.com",
-          Name: "Mern Stack video platform",
-        },
-        To: [
-          {
-            Email: email,
-          },
-        ],
-        Subject: "Email Verification",
-        TextPart: `Please verify your email by clicking the link: ${verificationLink}`,
-        // HTMLPart: `<h3>Email Verification</h3><p>Please verify your email by clicking the link: <a href="${verificationLink}">${verificationLink}</a></p>`,
-        HTMLPart: `<h3>Welcome to Mern Stack Video Platform!</h3>
-<p>We're excited to have you on board. Please click the button below to verify your email and get started.</p>
-<a href="${verificationLink}" style="padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Verify Email</a>
-`,
-      },
-    ],
-  });
-
-  return request
-    .then((result) => {
-      // console.log("Verification email sent:", result.body);
-      console.log("Verification email sent");
-    })
-    .catch((err) => {
-      console.error(
-        "Error sending verification email:",
-        err.statusCode,
-        err.message
-      );
-    });
-}
+// Email verification function
 export async function verifyEmail(req, res) {
   try {
-    const { token } = req.query; // Get the token from the query parameter
-
-    // Find the user with the provided verification token
+    const { token } = req.query;
     const user = await User.findOne({ verificationToken: token });
 
     if (!user) {
@@ -135,33 +129,33 @@ export async function verifyEmail(req, res) {
         .status(400)
         .json({ success: false, message: "Invalid or expired token." });
     }
-    if (user.verificationTokenExpiration < Date.now()) {
+
+    if (user.verificationTokenExpires < Date.now()) {
+      // Clear expired token data
+
+      user.verificationToken = null;
+      user.verificationTokenExpires = null;
+      await user.save();
       return res
         .status(400)
         .json({ success: false, message: "Verification token has expired." });
     }
-    user.isVerified = true; // Set verific
-    // Update the user's verification statusation status to true
-    user.verificationToken = null; // Clear the token
-    user.verificationTokenExpiration = null;
+
+    user.isVerified = true;
+    user.verificationToken = null;
+    user.verificationTokenExpires = null;
     await user.save();
+
     generateTokenAndSetCookie(user._id, res);
-    return res.redirect(
-      "https://upgraded-mern-stack-video-platform.onrender.com/"
-    );
-    res.status(200).json({
-      success: true,
-      message: "Email verified successfully! You can now log in.",
-    });
+    return res.redirect(`${ENV_VARS.CLIENT_URL}`);
   } catch (error) {
-    console.log("Error in email verification", error.message);
+    console.log("Error in verifyEmail controller:", error.message);
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 }
 
 export async function authCheck(req, res) {
   try {
-    // console.log("req.user:", req.user);
     res.status(200).json({ success: true, user: req.user });
   } catch (error) {
     console.log("Error in authCheck controller", error.message);
@@ -189,7 +183,7 @@ export async function login(req, res) {
         .json({ success: false, message: "All fields are required" });
     }
 
-    const user = await User.findOne({ email: email });
+    const user = await User.findOne({ email });
     if (!user) {
       return res
         .status(404)
