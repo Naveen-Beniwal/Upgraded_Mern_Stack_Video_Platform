@@ -77,3 +77,58 @@ A full-stack Netflix-inspired streaming platform built with MERN stack, featurin
 1. Clone the repository
 ```bash
 git clone https://github.com/Naveen-Beniwal/Upgraded_Mern_Stack_Video_Platform.git
+Install backend dependencies
+bash
+cd Upgraded_Mern_Stack_Video_Platform
+npm install
+Install frontend dependencies
+bash
+cd frontend
+npm install
+Set up environment variables
+Create a .env file in the root directory
+Add the required environment variables
+env
+PORT=
+MONGO_URI=
+JWT_SECRET=
+NODE_ENV=
+TMDB_API_KEY=
+CLIENT_URL=
+ACTIVE_LINK=
+MAILJET_API_KEY=
+MAILJET_SECRET_KEY=
+Start the server
+npm start
+Start the frontend
+bash
+cd frontend
+npm run dev
+📄 API Endpoints
+Authentication Routes
+Code
+POST /api/v1/auth/signup - Register new user
+GET /api/v1/auth/verify-email - Verify email address
+POST /api/v1/auth/login - User login
+GET /api/v1/auth/logout - User logout
+GET /api/v1/auth/check - Check user authentication
+Protected Routes
+Code
+/api/v1/movie/* - Movie-related endpoints
+/api/v1/tv/* - TV show-related endpoints
+/api/v1/search/* - Search functionality endpoints
+Search Routes
+Code
+GET /api/v1/search/movie/:query - Search movies
+GET /api/v1/search/tv/:query - Search TV shows
+GET /api/v1/search/person/:query - Search people
+GET /api/v1/search/history - Get user's search history
+🎥 Demo Video
+🌐 Website
+Visit the Live Website
+
+📚 Contributing
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+
+📜 License
+MIT
