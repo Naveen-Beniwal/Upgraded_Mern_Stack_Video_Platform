@@ -123,12 +123,3 @@ GET /api/v1/search/movie/:query - Search movies
 GET /api/v1/search/tv/:query - Search TV shows
 GET /api/v1/search/person/:query - Search people
 GET /api/v1/search/history - Get user's search history
-🎥 Demo Video
-🌐 Website
-Visit the Live Website
-
-📚 Contributing
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
-
-📜 License
-MIT
