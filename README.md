@@ -116,23 +116,22 @@ npm run dev
 📄 API Endpoints
 
 Authentication Routes
-Code
-POST /api/v1/auth/signup - Register new user
-GET /api/v1/auth/verify-email - Verify email address
-POST /api/v1/auth/login - User login
-GET /api/v1/auth/logout - User logout
-GET /api/v1/auth/check - Check user authentication
+
+- POST /api/v1/auth/signup - Register new user
+- GET /api/v1/auth/verify-email - Verify email address
+- POST /api/v1/auth/login - User login
+- GET /api/v1/auth/logout - User logout
+- GET /api/v1/auth/check - Check user authentication
 
 Protected Routes
 
-Code
-/api/v1/movie/* - Movie-related endpoints
-/api/v1/tv/* - TV show-related endpoints
-/api/v1/search/* - Search functionality endpoints
+- /api/v1/movie/* - Movie-related endpoints
+- /api/v1/tv/* - TV show-related endpoints
+- /api/v1/search/* - Search functionality endpoints
+  
 Search Routes
 
-Code
-GET /api/v1/search/movie/:query - Search movies
-GET /api/v1/search/tv/:query - Search TV shows
-GET /api/v1/search/person/:query - Search people
-GET /api/v1/search/history - Get user's search history
+- GET /api/v1/search/movie/:query - Search movies
+- GET /api/v1/search/tv/:query - Search TV shows
+- GET /api/v1/search/person/:query - Search people
+- GET /api/v1/search/history - Get user's search history
