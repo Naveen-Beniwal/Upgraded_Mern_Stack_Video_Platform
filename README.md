@@ -3,7 +3,7 @@
 A full-stack Netflix-inspired streaming platform built with MERN stack, featuring advanced authentication, TMDB integration, and a modern responsive UI.
 
   
-  [🌐 Live Demo](https://upgraded-mern-stack-video-platform.onrender.com/) | Response Time: ~800ms
+  [🌐 Live Demo](https://upgraded-mern-stack-video-platform.onrender.com/) | Response Time: ~800ms | First 1 minute to start the server as it is deployed on free version of Render Deployment.
 </div>
 
 ## ⭐ Core Features
