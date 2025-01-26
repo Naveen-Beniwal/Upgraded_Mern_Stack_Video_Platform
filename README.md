@@ -90,8 +90,11 @@ bash
 cd frontend
 npm install
 Set up environment variables
+
 Create a .env file in the root directory
+
 Add the required environment variables
+
 env
 PORT=
 MONGO_URI=
@@ -107,8 +110,11 @@ npm start
 Start the frontend
 bash
 cd frontend
+
 npm run dev
+```
 📄 API Endpoints
+
 Authentication Routes
 Code
 POST /api/v1/auth/signup - Register new user
@@ -116,12 +122,15 @@ GET /api/v1/auth/verify-email - Verify email address
 POST /api/v1/auth/login - User login
 GET /api/v1/auth/logout - User logout
 GET /api/v1/auth/check - Check user authentication
+
 Protected Routes
+
 Code
 /api/v1/movie/* - Movie-related endpoints
 /api/v1/tv/* - TV show-related endpoints
 /api/v1/search/* - Search functionality endpoints
 Search Routes
+
 Code
 GET /api/v1/search/movie/:query - Search movies
 GET /api/v1/search/tv/:query - Search TV shows
